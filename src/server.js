@@ -1,43 +1,31 @@
-const express = require('express');
-const cors = require('cors');
 require('dotenv').config();
 
-// Conectar a base de datos
+const http = require('http');
 const connectDB = require('./config/database');
+const app = require('./app');
+const config = require('./config');
+
+const PORT = config.PORT || process.env.PORT || 3001;
+
+// Conectar a la base de datos antes de levantar el servidor
 connectDB();
 
-const app = express();
-const PORT = process.env.PORT || 3001;
+const server = http.createServer(app);
 
-// Middlewares
-app.use(cors());
-app.use(express.json());
-
-// Ruta de prueba
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    message: '✅ Backend funcionando correctamente!',
-    timestamp: new Date().toISOString()
-  });
+server.listen(PORT, () => {
+    console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });
 
-// Manejo de errores
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ 
-    success: false, 
-    message: 'Algo salió mal en el servidor' 
-  });
-});
-
-// ✅ RUTA 404 CORREGIDA - Quita el * o usa este formato
-app.use((req, res) => {
-  res.status(404).json({ 
-    success: false, 
-    message: 'Ruta no encontrada' 
-  });
-});
-
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error(
+            `FATAL: El puerto ${PORT} ya está en uso. Cierra el proceso que lo ocupa o cambia PORT en .env.`,
+        );
+        console.error(
+            'Sugerencia: en Git Bash: `netstat -ano | grep 3001` y luego `taskkill /PID <PID> /F` (CMD/PowerShell).',
+        );
+        throw new Error(`FATAL: El puerto ${PORT} ya está en uso.`);
+    }
+    console.error('Error en el servidor:', err);
+    throw err;
 });
