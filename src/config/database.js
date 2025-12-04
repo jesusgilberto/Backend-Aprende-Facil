@@ -1,15 +1,27 @@
 const mongoose = require('mongoose');
+const { MONGODB_URI } = require('./index');
+
+const redactUri = (uri) => {
+    if (!uri) return uri;
+    try {
+        return uri.replace(/\/\/(.*@)/, '//<REDACTED>@');
+    } catch (e) {
+        return '<REDACTED>';
+    }
+};
 
 const connectDB = async () => {
     try {
-        const conn = await mongoose.connect(
-            process.env.MONGODB_URI || 'mongodb://localhost:27017/mi-proyecto-educativo',
-        );
+        console.log(`🔗 Conectando a MongoDB: ${redactUri(MONGODB_URI)}`);
+        const conn = await mongoose.connect(MONGODB_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
         console.log(`✅ MongoDB Conectado: ${conn.connection.host}`);
     } catch (error) {
         console.error('❌ Error conectando a MongoDB:', error.message);
-        // No usar process.exit() en desarrollo
-        console.log('⚠️  Continuando sin base de datos...');
+        console.error('FATAL: no se pudo conectar a la base de datos. Abortando inicio.');
+        throw error;
     }
 };
 
