@@ -5,7 +5,7 @@ const connectDB = require('./config/database');
 const app = require('./app');
 const config = require('./config');
 
-const PORT = config.PORT || process.env.PORT || 3001;
+const PORT = config.PORT || process.env.PORT || 3000;
 
 // Conectar a la base de datos antes de levantar el servidor
 connectDB();
@@ -22,7 +22,7 @@ server.on('error', (err) => {
             `FATAL: El puerto ${PORT} ya está en uso. Cierra el proceso que lo ocupa o cambia PORT en .env.`,
         );
         console.error(
-            'Sugerencia: en Git Bash: `netstat -ano | grep 3001` y luego `taskkill /PID <PID> /F` (CMD/PowerShell).',
+            'Sugerencia: en Git Bash: `netstat -ano | grep 3000` y luego `taskkill /PID <PID> /F` (CMD/PowerShell).',
         );
         throw new Error(`FATAL: El puerto ${PORT} ya está en uso.`);
     }
