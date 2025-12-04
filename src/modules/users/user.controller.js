@@ -40,3 +40,23 @@ exports.register = asyncHandler(async (req, res) => {
 exports.getMe = asyncHandler(async (req, res) => {
     res.json({ success: true, data: req.user });
 });
+
+// Public list of users (no auth) - limited fields
+exports.listPublic = asyncHandler(async (req, res) => {
+    const page = Math.max(parseInt(req.query.page || '1', 10), 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit || '10', 10), 1), 50);
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+        User.find({}, 'username firstName lastName email').skip(skip).limit(limit).lean(),
+        User.countDocuments({}),
+    ]);
+
+    res.json({
+        success: true,
+        page,
+        limit,
+        total,
+        data: items,
+    });
+});
