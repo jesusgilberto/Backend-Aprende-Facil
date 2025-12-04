@@ -8,17 +8,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ========== ✅ LOGGING DE PETICIONES (útil para debugging) ==========
-app.use((req, res, next) => {
-    const reqId = req.headers['x-railway-request-id'] || req.headers['x-request-id'] || 'no-id';
-    const ip = req.headers['x-forwarded-for'] || req.ip || req.socket?.remoteAddress;
-    console.log(`📨 ${new Date().toISOString()} [${reqId}] ${req.method} ${req.originalUrl} ← ${ip}`);
-    if (Object.keys(req.body).length > 0) {
-        console.log('   Body:', JSON.stringify(req.body).substring(0, 200) + '...');
-    }
-    next();
-});
-
 // ========== ✅ RUTAS ==========
 const authRoutes = require('./modules/auth/auth.route');
 const userRoutes = require('./modules/users/user.route');
@@ -27,7 +16,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 
 // ========== ✅ RUTAS DE SALUD Y TEST ==========
-// Raíz simple para verificar enrutamiento del proxy
 app.get('/', (req, res) => {
     res.json({
         ok: true,
@@ -56,9 +44,8 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// ✅ RUTAS DE TEST PARA DEBUGGING (añadidas temporalmente)
+// ========== ✅ RUTAS DE TEST ==========
 app.get('/api/test-simple', (req, res) => {
-    console.log('✅ Ruta /api/test-simple llamada');
     res.json({ 
         success: true,
         message: 'Servidor funcionando CORRECTAMENTE',
@@ -70,7 +57,6 @@ app.get('/api/test-simple', (req, res) => {
 });
 
 app.get('/api/test-public', (req, res) => {
-    console.log('✅ Ruta pública /api/test-public llamada');
     res.json({ 
         success: true,
         public: true,
@@ -79,10 +65,8 @@ app.get('/api/test-public', (req, res) => {
     });
 });
 
-// ========== ✅ RUTA 404 MEJORADA ==========
+// ========== ✅ RUTA 404 ==========
 app.use((req, res) => {
-    console.error(`❌ Ruta no encontrada: ${req.method} ${req.originalUrl}`);
-    
     res.status(404).json({ 
         success: false, 
         message: `Ruta ${req.method} ${req.originalUrl} no encontrada`,
@@ -93,23 +77,13 @@ app.use((req, res) => {
             'GET /api/test-public',
             'POST /api/auth/register',
             'POST /api/auth/login',
-            'GET /api/users/me (requiere token)',
-            '❌ NOTA: GET /api/users no existe, usa GET /api/users/me'
+            'GET /api/users/me (requiere token)'
         ]
     });
 });
 
-// ========== ✅ ERROR HANDLER MEJORADO ==========
-// Reemplaza tu errorHandler actual con este middleware directo
-// o modifica tu archivo errorHandler.js
-
+// ========== ✅ ERROR HANDLER ==========
 app.use((err, req, res, next) => {
-    console.error('💥💥💥 ERROR NO MANEJADO EN APP.JS:');
-    console.error('   Ruta:', req.method, req.originalUrl);
-    console.error('   Mensaje:', err.message);
-    console.error('   Stack:', err.stack);
-    console.error('   Tipo:', err.name);
-    
     // Si ya se envió una respuesta, no enviar otra
     if (res.headersSent) {
         return next(err);
