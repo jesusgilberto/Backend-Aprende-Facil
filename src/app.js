@@ -5,7 +5,8 @@ const errorHandler = require('./middleware/errorHandler');
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json()); 
+
 
 // Routes
 const authRoutes = require('./modules/auth/auth.route');
