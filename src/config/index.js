@@ -39,5 +39,18 @@ if (!config.JWT_SECRET && config.NODE_ENV === 'production') {
   process.exit(1);
 }
 
+// En producción, exigir MONGODB_URI definido (evitar default localhost)
+if (config.NODE_ENV === 'production') {
+  const isLocalDefault = !config.MONGODB_URI && config.MONGODB_URI.includes('localhost');
+  if (isLocalDefault) {
+    console.error(
+      'FATAL: MONGODB_URI no definido en producción. Configura MONGODB_URI en variables del entorno (Railway/Atlas).',
+    );
+    throw new Error(
+      'FATAL: MONGODB_URI no definido en producción. Configura MONGODB_URI en variables del entorno (Railway/Atlas).',
+    );
+  }
+}
+
 
 module.exports = config;
