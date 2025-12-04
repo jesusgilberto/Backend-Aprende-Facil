@@ -1,13 +1,16 @@
 const mongoose = require('mongoose');
-const { MONGODB_URI } = require('./index');
-
+// ❌ QUITA ESTO:
+// const { MONGODB_URI } = require('./index');
 
 const connectDB = async () => {
     try {
         console.log('🔗 Conectando a MongoDB Atlas...');
         
+        // ✅ USA process.env DIRECTAMENTE:
+        const MONGODB_URI = process.env.MONGODB_URI;
+        
         if (!MONGODB_URI) {
-            throw new Error('❌ MONGODB_URI no definida');
+            throw new Error('❌ MONGODB_URI no definida en variables de entorno');
         }
         
         console.log(`   URL: ${MONGODB_URI.substring(0, 60)}...`);
@@ -23,9 +26,8 @@ const connectDB = async () => {
         
     } catch (error) {
         console.error('❌ Error MongoDB:', error.message);
-        throw error;  // Propaga el error
+        throw error;
     }
 };
 
-// ✅ EXPORTAR LA FUNCIÓN DIRECTAMENTE
 module.exports = connectDB;
