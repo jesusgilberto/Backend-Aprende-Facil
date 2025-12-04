@@ -39,4 +39,5 @@ if (!config.JWT_SECRET && config.NODE_ENV === 'production') {
   process.exit(1);
 }
 
+
 module.exports = config;
