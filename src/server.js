@@ -8,7 +8,34 @@ const config = require('./config');
 
 const PORT = config.PORT || process.env.PORT || 3000;
 
-// ✅ LOGS DE INICIO MEJORADOS
+// ========== ✅ MANEJADORES DE ERRORES GLOBALES ==========
+// Agrega esto AL INICIO, antes de startServer()
+
+process.on('uncaughtException', (error) => {
+    console.error('💥💥💥 ERROR NO CAPTURADO (uncaughtException):');
+    console.error('   Mensaje:', error.message);
+    console.error('   Stack:', error.stack);
+    console.error('   Tipo:', error.name);
+    
+    // No salgas inmediatamente en producción, solo registra
+    if (process.env.NODE_ENV === 'production') {
+        console.error('🚨 En producción - Manteniendo proceso activo...');
+        // Puedes enviar este error a un servicio de monitoreo
+    }
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('💥💥💥 PROMESA RECHAZADA NO MANEJADA (unhandledRejection):');
+    console.error('   Razón:', reason);
+    console.error('   Promesa:', promise);
+    
+    // En desarrollo, puedes salir; en producción, solo loguear
+    if (process.env.NODE_ENV !== 'production') {
+        console.error('⚠️  Desarrollo: Esto podría causar memory leaks');
+    }
+});
+
+// ========== ✅ LOGS DE INICIO MEJORADOS ==========
 console.log('🚀 === BACKEND APRENDE-FACIL ===');
 console.log(`📅 ${new Date().toLocaleString()}`);
 console.log(`🔧 Entorno: ${process.env.NODE_ENV || 'development'}`);
@@ -16,7 +43,7 @@ console.log(`🔢 Node.js: ${process.version}`);
 console.log(`🎯 Puerto: ${PORT}`);
 console.log('================================');
 
-// ✅ FUNCIÓN ASYNC PARA INICIAR TODO
+// ========== ✅ FUNCIÓN ASYNC PARA INICIAR TODO ==========
 const startServer = async () => {
     try {
         console.log('\n🔗 Paso 1/2: Conectando a MongoDB Atlas...');
@@ -42,6 +69,21 @@ const startServer = async () => {
             console.log('   POST /api/auth/login       → Inicio de sesión');
             console.log('   GET  /api/users            → Listar usuarios (protegido)');
             console.log('==========================================\n');
+            
+            // ✅ AGREGAR RUTA DE TEST SIMPLE
+            console.log('🔧 Ruta de test añadida: GET /api/test');
+        });
+        
+        // ✅ AGREGAR RUTA DE TEST DIRECTAMENTE (temporal)
+        // Esto va después de server.listen pero dentro del mismo scope
+        app.get('/api/test', (req, res) => {
+            console.log('✅ Ruta /api/test llamada');
+            res.json({ 
+                message: 'Test exitoso desde Railway', 
+                timestamp: new Date().toISOString(),
+                status: 'online',
+                environment: process.env.NODE_ENV
+            });
         });
         
         // ✅ MANEJADOR DE ERRORES MEJORADO
