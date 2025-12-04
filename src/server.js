@@ -1,109 +1,202 @@
-// server.js
+// server.js - VERSIÓN OPTIMIZADA PARA RAILWAY
 require('dotenv').config();
 
-// ========== ✅ MANEJADORES DE ERRORES GLOBALES ==========
+// ========== ✅ CONFIGURACIÓN INICIAL ==========
+console.log('='.repeat(60));
+console.log('🚀 INICIANDO BACKEND EN RAILWAY');
+console.log('='.repeat(60));
+console.log(`📅 ${new Date().toLocaleString()}`);
+console.log(`🔧 Node: ${process.version}`);
+console.log(`🎯 Entorno: ${process.env.NODE_ENV || 'development'}`);
+
+// ========== ✅ MANEJADORES DE ERRORES ==========
 process.on('uncaughtException', (error) => {
-    console.error('💥💥💥 ERROR NO CAPTURADO (uncaughtException):');
-    console.error('   Mensaje:', error.message);
-    console.error('   Stack:', error.stack);
-    console.error('   Fecha:', new Date().toISOString());
+    console.error('💥 ERROR NO CAPTURADO:', error.message);
+    // Mantener proceso vivo
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('💥💥💥 PROMESA RECHAZADA NO MANEJADA:');
-    console.error('   Razón:', reason);
-    console.error('   Fecha:', new Date().toISOString());
+    console.error('💥 PROMESA RECHAZADA:', reason);
 });
 
-const http = require('http');
-const connectDB = require('./config/database');
-const app = require('./app');
-const config = require('./config');
-
-const PORT = config.PORT || process.env.PORT || 8080;
-
-// ========== ✅ LOGS DE INICIO ==========
-console.log('\n' + '='.repeat(50));
-console.log('🚀 BACKEND APRENDE-FACIL - INICIANDO');
-console.log('='.repeat(50));
-console.log(`📅 ${new Date().toLocaleString()}`);
-console.log(`🔧 Entorno: ${process.env.NODE_ENV || 'development'}`);
-console.log(`🔢 Node.js: ${process.version}`);
-console.log(`🎯 Puerto: ${PORT}`);
-console.log(`🗄️  MongoDB: ${process.env.MONGODB_URI ? '✅ URI definida' : '❌ No definida'}`);
-console.log(`🔐 JWT: ${config.JWT_SECRET ? '✅ Configurado' : '❌ Faltante'}`);
-
-// ========== ✅ FUNCIÓN PARA INICIAR SERVIDOR ==========
-const startServer = async () => {
+// ========== ✅ VERIFICAR DEPENDENCIAS CRÍTICAS ==========
+const requiredModules = ['express', 'mongoose', 'cors', 'jsonwebtoken'];
+requiredModules.forEach(moduleName => {
     try {
-        console.log('\n🔗 Conectando a MongoDB Atlas...');
+        require(moduleName);
+        console.log(`✅ ${moduleName}: Disponible`);
+    } catch (error) {
+        console.error(`❌ ${moduleName}: NO DISPONIBLE - ${error.message}`);
+        console.error('⚠️  Ejecuta: npm install express mongoose cors jsonwebtoken');
+    }
+});
+
+// ========== ✅ CREAR APP EXPRESS ==========
+const express = require('express');
+const cors = require('cors');
+const app = express();
+
+// Middleware básico
+app.use(cors());
+app.use(express.json());
+
+// ========== ✅ RUTAS BÁSICAS (sin DB primero) ==========
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'online',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        environment: process.env.NODE_ENV
+    });
+});
+
+app.get('/api/test', (req, res) => {
+    res.json({
+        success: true,
+        message: '✅ Backend funcionando en Railway',
+        version: '1.0.0'
+    });
+});
+
+// ========== ✅ CONEXIÓN MONGODB (con reintentos) ==========
+const connectToDatabase = async () => {
+    try {
+        const mongoose = require('mongoose');
         
-        // Conectar a MongoDB
-        await connectDB();
+        // URI hardcodeada temporalmente
+        const MONGODB_URI = process.env.MONGODB_URI || 
+            'mongodb+srv://gilbertoramirez89461_db_user:Lcj9VPyvhJCejqly@aprendefacil.nggyhqs.mongodb.net/mi-proyecto-educativo?retryWrites=true&w=majority';
         
-        console.log('✅ MongoDB conectado exitosamente\n');
+        console.log('🔗 Conectando a MongoDB...');
         
-        // Crear servidor HTTP
-        const server = http.createServer(app);
-        
-        // Iniciar servidor
-        server.listen(PORT, () => {
-            console.log('✅ Servidor HTTP iniciado');
-            console.log(`📍 Local:    http://localhost:${PORT}`);
-            console.log(`🌐 Railway:  https://backend-aprende-facil-production.up.railway.app`);
-            console.log(`⏰ Hora:     ${new Date().toLocaleTimeString()}`);
-            console.log(`📊 Uptime:   ${process.uptime()} segundos`);
-            
-            console.log('\n📋 Endpoints disponibles:');
-            console.log('   GET  /health                    → Estado general');
-            console.log('   GET  /api/health               → Estado API');
-            console.log('   GET  /api/test-simple          → Test simple');
-            console.log('   GET  /api/test-public          → Test público');
-            console.log('   POST /api/auth/register        → Registro');
-            console.log('   POST /api/auth/login           → Login');
-            console.log('   GET  /api/users/me             → Usuario actual (con token)');
-            console.log('='.repeat(50));
-            console.log('⚠️  IMPORTANTE:');
-            console.log('   - GET /api/users NO EXISTE en tu código');
-            console.log('   - Usa GET /api/users/me con token JWT');
-            console.log('='.repeat(50) + '\n');
+        await mongoose.connect(MONGODB_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
         });
         
-        // Manejar errores del servidor
-        server.on('error', (err) => {
-            console.error('\n💥 ERROR EN SERVIDOR HTTP:');
-            console.error(`   Tipo: ${err.code}`);
-            console.error(`   Mensaje: ${err.message}`);
-            
-            if (err.code === 'EADDRINUSE') {
-                console.error(`\n⚠️  Puerto ${PORT} ocupado`);
+        console.log('✅ MongoDB conectado exitosamente');
+        
+        // Agregar rutas que usan DB
+        app.get('/api/db-status', async (req, res) => {
+            try {
+                const collections = await mongoose.connection.db.listCollections().toArray();
+                res.json({
+                    success: true,
+                    database: mongoose.connection.db.databaseName,
+                    collections: collections.map(c => c.name),
+                    status: 'connected'
+                });
+            } catch (error) {
+                res.json({
+                    success: false,
+                    error: error.message,
+                    status: 'error'
+                });
             }
         });
         
-        // Manejar señales de cierre
-        ['SIGTERM', 'SIGINT'].forEach(signal => {
-            process.on(signal, () => {
-                console.log(`\n⚠️  ${signal} recibido`);
-                server.close(() => {
-                    console.log('✅ Servidor cerrado correctamente');
-                    process.exit(0);
-                });
-            });
-        });
-        
+        return true;
     } catch (error) {
-        console.error('\n💥❌ NO SE PUDO INICIAR EL SERVIDOR');
-        console.error(`   Error: ${error.message}`);
-        
-        if (error.message.includes('MongoDB') || error.message.includes('connect')) {
-            console.error('\n🔍 PROBLEMA DE CONEXIÓN MONGODB:');
-            console.error('   1. Verifica MONGODB_URI en Railway');
-            console.error('   2. Revisa IP Whitelist en Atlas');
-        }
-        
-        process.exit(1);
+        console.error('❌ Error conectando a MongoDB:', error.message);
+        console.log('⚠️  Continuando sin base de datos...');
+        return false;
     }
 };
 
-// Iniciar servidor
+// ========== ✅ INICIAR SERVIDOR ==========
+const startServer = async () => {
+    try {
+        // Puerto de Railway
+        const PORT = process.env.PORT || 8080;
+        
+        console.log(`🎯 Puerto asignado: ${PORT}`);
+        
+        // Intentar conectar a DB
+        const dbConnected = await connectToDatabase();
+        
+        // Si hay DB, agregar más rutas
+        if (dbConnected) {
+            try {
+                const userRoutes = require('./modules/users/user.route');
+                const authRoutes = require('./modules/auth/auth.route');
+                
+                app.use('/api/users', userRoutes);
+                app.use('/api/auth', authRoutes);
+                
+                console.log('✅ Rutas de usuarios y autenticación cargadas');
+            } catch (routeError) {
+                console.error('⚠️  Error cargando rutas:', routeError.message);
+            }
+        }
+        
+        // Ruta 404
+        app.use((req, res) => {
+            res.status(404).json({
+                success: false,
+                error: `Ruta ${req.method} ${req.url} no encontrada`,
+                availableRoutes: ['/health', '/api/test', '/api/db-status']
+            });
+        });
+        
+        // Middleware de errores
+        app.use((err, req, res, next) => {
+            console.error('💥 Error en aplicación:', err.message);
+            res.status(500).json({
+                success: false,
+                error: 'Error interno del servidor'
+            });
+        });
+        
+        // Crear servidor
+        const http = require('http');
+        const server = http.createServer(app);
+        
+        // Escuchar
+        server.listen(PORT, '0.0.0.0', () => {
+            console.log('='.repeat(60));
+            console.log('✅ SERVIDOR INICIADO EXITOSAMENTE');
+            console.log('='.repeat(60));
+            console.log(`📍 URL: https://backend-aprende-facil-production.up.railway.app`);
+            console.log(`🔗 Local: http://localhost:${PORT}`);
+            console.log(`🕐 Uptime: ${process.uptime()}s`);
+            console.log('');
+            console.log('📋 ENDPOINTS:');
+            console.log('   GET /health');
+            console.log('   GET /api/test');
+            console.log('   GET /api/db-status');
+            if (dbConnected) {
+                console.log('   POST /api/auth/register');
+                console.log('   POST /api/auth/login');
+                console.log('   GET /api/users/me');
+            }
+            console.log('='.repeat(60));
+        });
+        
+        // Manejar errores del servidor
+        server.on('error', (error) => {
+            console.error('💥 Error del servidor:', error.message);
+        });
+        
+        // Keep-alive log
+        setInterval(() => {
+            console.log(`🔄 Activo por ${Math.floor(process.uptime())} segundos`);
+        }, 60000);
+        
+    } catch (error) {
+        console.error('💥 Error crítico al iniciar:', error.message);
+        console.error('Stack:', error.stack);
+    }
+};
+
+// ========== ✅ MANEJAR SEÑALES ==========
+['SIGTERM', 'SIGINT'].forEach(signal => {
+    process.on(signal, () => {
+        console.log(`\n⚠️  ${signal} recibido - Cerrando...`);
+        process.exit(0);
+    });
+});
+
+// ========== ✅ INICIAR ==========
 startServer();
