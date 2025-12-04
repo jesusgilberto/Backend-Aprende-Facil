@@ -57,46 +57,7 @@ app.use((req, res, next) => {
     next();
 });
 
-// ========== ✅ RUTA DE HEALTH MEJORADA ==========
-app.get('/health', (req, res) => {
-    const uptime = process.uptime();
-    const memory = process.memoryUsage();
-    
-    const healthData = {
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
-        uptime: `${Math.floor(uptime)}s`,
-        memory: {
-            rss: `${Math.round(memory.rss / 1024 / 1024)}MB`,
-            heapTotal: `${Math.round(memory.heapTotal / 1024 / 1024)}MB`,
-            heapUsed: `${Math.round(memory.heapUsed / 1024 / 1024)}MB`
-        },
-        requests: {
-            total: requestCount,
-            healthChecks: healthCheckCount
-        },
-        server: {
-            startTime: new Date(serverStartTime).toISOString(),
-            uptimeDays: (uptime / 86400).toFixed(2)
-        },
-        database: 'checking...',
-        environment: process.env.NODE_ENV || 'development'
-    };
-    
-    // Verificar conexión a MongoDB
-    const mongoose = require('mongoose');
-    if (mongoose.connection.readyState === 1) {
-        healthData.database = 'connected';
-        healthData.dbStats = {
-            name: mongoose.connection.db.databaseName,
-            collections: 'available'
-        };
-    } else {
-        healthData.database = 'disconnected';
-    }
-    
-    res.json(healthData);
-});
+// Health está unificado en app.js (GET /health)
 
 // ========== ✅ RUTA DE STATUS COMPLETO ==========
 app.get('/api/status', (req, res) => {

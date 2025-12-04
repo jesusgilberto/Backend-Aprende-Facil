@@ -10,7 +10,9 @@ app.use(express.json());
 
 // ========== ✅ LOGGING DE PETICIONES (útil para debugging) ==========
 app.use((req, res, next) => {
-    console.log(`📨 ${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
+    const reqId = req.headers['x-railway-request-id'] || req.headers['x-request-id'] || 'no-id';
+    const ip = req.headers['x-forwarded-for'] || req.ip || req.socket?.remoteAddress;
+    console.log(`📨 ${new Date().toISOString()} [${reqId}] ${req.method} ${req.originalUrl} ← ${ip}`);
     if (Object.keys(req.body).length > 0) {
         console.log('   Body:', JSON.stringify(req.body).substring(0, 200) + '...');
     }
@@ -25,6 +27,16 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 
 // ========== ✅ RUTAS DE SALUD Y TEST ==========
+// Raíz simple para verificar enrutamiento del proxy
+app.get('/', (req, res) => {
+    res.json({
+        ok: true,
+        message: 'Backend Aprende-Fácil activo',
+        timestamp: new Date().toISOString(),
+        env: process.env.NODE_ENV || 'development'
+    });
+});
+
 app.get('/health', (req, res) => {
     res.json({
         success: true,
