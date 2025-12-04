@@ -6,7 +6,7 @@ const connectDB = require('./config/database');
 const app = require('./app');
 const config = require('./config');
 
-const PORT = config.PORT || process.env.PORT || 3001;
+const PORT = config.PORT || process.env.PORT || 3000;
 
 // ✅ LOGS DE INICIO MEJORADOS
 console.log('🚀 === BACKEND APRENDE-FACIL ===');
